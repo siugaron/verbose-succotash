@@ -13,7 +13,7 @@ class EpgParser
      *   убрать http://develops.online/proxy.php?, если не использовать прокси лист
      */
     protected $config = array(
-        'baseUrl' => 'http://develops.online/proxy.php?http://ncplus.pl/',
+        'baseUrl' => 'http://ncplus.pl/',
         'curlProxy' => false,//false or ip
         'curlTor' => false,
         'curlTorPort' => null //set if curlTor is true(default 9050)
@@ -26,6 +26,13 @@ class EpgParser
     protected $errors = array();
     protected $curlObject = null;
     protected $debug = false;
+    /**
+     * @var bool Переключение на парсинг через свой сервер
+     * @var bool Путь сервера для переключения
+     */
+    protected $forceTransferInner = true;
+    protected $forceTransferInnerPath = "http://develops.online/proxy.php?";
+    //-----
     protected $headers;
 
 
@@ -43,6 +50,10 @@ class EpgParser
             'Cache-Control: max-age=0',
             'Content-type: application/x-www-form-urlencoded;charset=UTF-8'
         );
+
+        if ($this->forceTransferInner) {
+            $this->config['baseUrl'] = $this->forceTransferInnerPath . $this->config['baseUrl'];
+        }
     }
 
     /**
@@ -109,7 +120,7 @@ class EpgParser
         $this->curlOptions[CURLOPT_USERAGENT] = "Mozilla/5.0 (Windows NT 6.3; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36";
         $this->curlOptions[CURLOPT_TIMEOUT] = 180;
         $this->curlOptions[CURLOPT_HTTPHEADER] = $this->headers;
-        $this->curlOptions[CURLOPT_ENCODING ] = "gzip";
+        $this->curlOptions[CURLOPT_ENCODING] = "gzip";
         //$this->curlOptions[CURLOPT_HEADER] = 1;
         if ($this->debug) {
             $f = fopen("curl.log", "a");
@@ -133,7 +144,7 @@ class EpgParser
          *   убрать восклицательный, если использовать прокси лист
          */
         $this->curlOptions[CURLOPT_URL] = $url;
-        if (!$this->config['curlProxy']) {
+        if (!$this->forceTransferInner && $this->config['curlProxy']) {
             $this->curlOptions[CURLOPT_PROXY] = $this->config['curlProxy'];
         } elseif ($this->config['curlTor']) {
             $this->setCurlTor();
